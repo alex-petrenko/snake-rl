@@ -2,7 +2,9 @@
   <dictionary name="alex">
     <words>
       <w>asctime</w>
+      <w>collectable</w>
       <w>envs</w>
+      <w>gameplay</w>
       <w>imageio</w>
       <w>levelname</w>
       <w>lineno</w>
