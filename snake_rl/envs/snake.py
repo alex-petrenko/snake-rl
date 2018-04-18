@@ -50,12 +50,15 @@ class GameTile:
 
     @classmethod
     def color(cls, tile):
-        """Default color, should be overridden."""
         return {
             cls.ground: (0, 0, 0),
             cls.snake: (255, 255, 255),
             cls.apple: (255, 0, 0),
         }[tile]
+
+    @staticmethod
+    def snake_head_color():
+        return 255, 255, 153
 
 
 class GameMode:
@@ -127,6 +130,7 @@ class Snake(gym.Env):
             self.world[pos.ij] = GameTile.snake
             self.snake.append(pos)
 
+        self.num_food = 0
         self._spawn_food()  # generate a first piece of food
 
         self.speed = Action.delta(Action.up)
@@ -183,12 +187,12 @@ class Snake(gym.Env):
         loss_reward = -50 * self.reward_unit
 
         head_pos = self.snake[0]
-        if action == Action.noop:
-            new_head_pos = head_pos + self.speed
-        else:
-            new_delta = Action.delta(action)
-            new_head_pos = head_pos + new_delta
-            self.speed = new_delta
+        delta = Action.delta(action)
+        if action == Action.noop or delta == -self.speed:  # we can't go backwards
+            delta = self.speed
+
+        new_head_pos = head_pos + delta
+        self.speed = delta
 
         grow = 0
 
@@ -257,8 +261,13 @@ class Snake(gym.Env):
         for (i, j), tile in np.ndenumerate(self.world):
             if tile == GameTile.ground:
                 continue
-            color = GameTile.color(tile)
-            self.draw_tile(surface, Vec(i, j), color, tile_size)
+
+            pos = Vec(i, j)
+            if tile == GameTile.snake and self.snake[0] == pos:
+                color = GameTile.snake_head_color()
+            else:
+                color = GameTile.color(tile)
+            self.draw_tile(surface, pos, color, tile_size)
 
     @classmethod
     def draw_tile(cls, surface, pos, color, tile_size):
