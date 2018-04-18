@@ -1,5 +1,5 @@
 """
-Implementation of Snake game.
+Implementation of the Gym-compatible Snake game.
 
 """
 
@@ -294,7 +294,7 @@ class Snake(gym.Env):
             self.screen.blit(surface, (0, 0))
             pygame.display.flip()
         elif mode == 'rgb_array':
-            return np.transpose(pygame.surfarray.array2d(surface), axes=[1, 0])
+            return np.transpose(pygame.surfarray.array3d(surface), axes=[1, 0, 2])
 
     def close(self):
         """Implementation of the gym.Env abstract method."""
