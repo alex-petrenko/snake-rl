@@ -35,13 +35,25 @@ class StackFramesTests(unittest.TestCase):
     def test_stack_frames(self):
         env = gym.make(TEST_ENV)
         num_frames = 3
-        wrapper_env = envs.StackFramesWrapper(env, num_frames)
-        obs = wrapper_env.reset()
+        env = envs.StackFramesWrapper(env, num_frames)
+        obs = env.reset()
         self.assertEqual(len(obs), num_frames)
         for i in range(1, len(obs)):
             self.assertTrue(np.array_equal(obs[i], obs[i - 1]))
 
-        wrapper_env.step(envs.Action.noop)
-        wrapper_env.step(envs.Action.noop)
+        for _ in range(num_frames - 1):
+            env.step(envs.Action.noop)
         for i in range(1, len(obs)):
             self.assertFalse(np.array_equal(obs[i], obs[i - 1]))
+
+
+class ResizeGrayScaleTests(unittest.TestCase):
+    def test_resize_grayscale(self):
+        env = gym.make(TEST_ENV)
+        sz = 32
+        env = envs.ResizeAndGrayscaleWrapper(env, sz, sz)
+        obs = env.reset()
+        self.assertEqual(obs.shape, (sz, sz))
+        self.assertEqual(obs.dtype, np.float32)
+        for pixel in obs.flatten():
+            self.assertTrue(0.0 <= pixel <= 1.0)

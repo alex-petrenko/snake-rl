@@ -89,7 +89,7 @@ class Snake(gym.Env):
 
         # gym.Env variables
         self.action_space = spaces.Discrete(len(Action.all_actions))
-        self.observation_space = spaces.Box(0.0, 1.0, shape=[world_size, world_size], dtype=np.float32)
+        self.observation_space = None  # defined in a wrapper (use with a wrapper)
         self.reward_range = (-self.max_reward_abs, self.max_reward_abs)
 
         # variables for holding the game state

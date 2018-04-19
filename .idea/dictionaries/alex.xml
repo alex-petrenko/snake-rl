@@ -7,14 +7,18 @@
       <w>gameplay</w>
       <w>grayscale</w>
       <w>imageio</w>
+      <w>imshow</w>
       <w>levelname</w>
       <w>lineno</w>
       <w>matplotlib</w>
       <w>msecs</w>
+      <w>opencv</w>
       <w>petrenko</w>
       <w>prng</w>
       <w>pygame</w>
       <w>tensorflow</w>
+      <w>vmax</w>
+      <w>vmin</w>
     </words>
   </dictionary>
 </component>
