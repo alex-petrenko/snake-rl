@@ -3,6 +3,7 @@
     <words>
       <w>asctime</w>
       <w>collectable</w>
+      <w>conv</w>
       <w>envs</w>
       <w>gameplay</w>
       <w>grayscale</w>
@@ -12,10 +13,13 @@
       <w>lineno</w>
       <w>matplotlib</w>
       <w>msecs</w>
+      <w>multithread</w>
       <w>opencv</w>
       <w>petrenko</w>
       <w>prng</w>
       <w>pygame</w>
+      <w>regularizer</w>
+      <w>rollout</w>
       <w>tensorflow</w>
       <w>vmax</w>
       <w>vmin</w>

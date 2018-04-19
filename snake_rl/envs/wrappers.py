@@ -12,6 +12,7 @@ from gym import spaces
 from collections import deque
 
 from snake_rl.utils import imshow
+from snake_rl.utils.numpy_utils import numpy_all_the_way
 
 
 class EnvWrapper(gym.Env):
@@ -46,19 +47,24 @@ class StackFramesWrapper(EnvWrapper):
 
     def __init__(self, env, num_frames):
         super(StackFramesWrapper, self).__init__(env)
+        if len(env.observation_space.shape) != 2:
+            raise Exception('Stack frames works with 2D single channel images')
         self.num_frames = num_frames
         self.frames = None
+
+    def _frames_as_numpy(self):
+        return np.transpose(numpy_all_the_way(self.frames), axes=[1, 2, 0])
 
     def reset(self):
         observation = self.env.reset()
         self.frames = deque([observation] * self.num_frames)
-        return self.frames
+        return self._frames_as_numpy()
 
     def step(self, action):
         new_observation, reward, done, info = self.env.step(action)
         self.frames.popleft()
         self.frames.append(new_observation)
-        return self.frames, reward, done, info
+        return self._frames_as_numpy(), reward, done, info
 
 
 class ResizeAndGrayscaleWrapper(EnvWrapper):
@@ -71,13 +77,9 @@ class ResizeAndGrayscaleWrapper(EnvWrapper):
         self.h = h
 
     def _observation(self, obs):
-        imshow(obs)
         obs = cv2.cvtColor(obs, cv2.COLOR_RGB2GRAY)
-        imshow(obs, vmax=255)
         obs = cv2.resize(obs, (self.w, self.h), interpolation=cv2.INTER_AREA)
-        imshow(obs, vmax=255)
         obs = obs.astype(np.float32) / 255.0
-        imshow(obs)
         return obs
 
     def reset(self):
@@ -89,6 +91,6 @@ class ResizeAndGrayscaleWrapper(EnvWrapper):
 
 
 def wrap_env(env, sz=32, num_frames=3):
-    env = StackFramesWrapper(env, num_frames)
     env = ResizeAndGrayscaleWrapper(env, sz, sz)
+    env = StackFramesWrapper(env, num_frames)
     return env

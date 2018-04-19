@@ -31,29 +31,35 @@ class SnakeEnvTests(unittest.TestCase):
         self.assertIsNotNone(array)
 
 
-class StackFramesTests(unittest.TestCase):
-    def test_stack_frames(self):
-        env = gym.make(TEST_ENV)
-        num_frames = 3
-        env = envs.StackFramesWrapper(env, num_frames)
-        obs = env.reset()
-        self.assertEqual(len(obs), num_frames)
-        for i in range(1, len(obs)):
-            self.assertTrue(np.array_equal(obs[i], obs[i - 1]))
-
-        for _ in range(num_frames - 1):
-            env.step(envs.Action.noop)
-        for i in range(1, len(obs)):
-            self.assertFalse(np.array_equal(obs[i], obs[i - 1]))
-
-
 class ResizeGrayScaleTests(unittest.TestCase):
     def test_resize_grayscale(self):
         env = gym.make(TEST_ENV)
         sz = 32
         env = envs.ResizeAndGrayscaleWrapper(env, sz, sz)
-        obs = env.reset()
+        env.reset()
+        obs, *_ = env.step(envs.Action.noop)
         self.assertEqual(obs.shape, (sz, sz))
         self.assertEqual(obs.dtype, np.float32)
         for pixel in obs.flatten():
             self.assertTrue(0.0 <= pixel <= 1.0)
+
+
+class StackFramesTests(unittest.TestCase):
+    def test_stack_frames(self):
+        env = gym.make(TEST_ENV)
+        env = envs.ResizeAndGrayscaleWrapper(env, 64, 64)
+        num_frames = 3
+        env = envs.StackFramesWrapper(env, num_frames)
+        obs = env.reset()
+        self.assertEqual(obs.shape[-1], num_frames)
+        for i in range(1, obs.shape[-1]):
+            self.assertTrue(np.array_equal(obs[:, :, i], obs[:, :, i - 1]))
+
+        for _ in range(num_frames - 1):
+            obs, *_ = env.step(envs.Action.noop)
+
+        from snake_rl.utils.numpy_utils import imshow
+        imshow(obs)
+
+        for i in range(1, obs.shape[-1]):
+            self.assertFalse(np.array_equal(obs[:, :, i], obs[:, :, i - 1]))
