@@ -7,6 +7,7 @@ Implementation of the synchronous variant of the Advantage Actor-Critic algorith
 import time
 import numpy as np
 
+from snake_rl.utils.misc import *
 from snake_rl.utils.dnn_utils import *
 
 from snake_rl.algorithms.common import AgentLearner
@@ -63,7 +64,8 @@ class Policy:
         # summaries
         with tf.variable_scope('conv1', reuse=True):
             weights = tf.get_variable('weights')
-            tf.summary.image('conv1/kernels', put_kernels_on_grid(weights), max_outputs=1)
+            if weights.shape[2] in (1, 3, 4):  # does not work with 2-channel images
+                tf.summary.image('conv1/kernels', put_kernels_on_grid(weights), max_outputs=1)
         tf.summary.scalar('value', tf.reduce_mean(self.value))
         logger.info('Total parameters in the model: %d', count_total_parameters())
 
@@ -86,7 +88,7 @@ class Policy:
         The model does not use pooling or stride > 1 because the agent needs pixel-perfect control, but it may
         actually be a good idea to try stride or pooling to decrease the number of parameters.
         """
-        conv_input = self._convnet_simple([(128, 3, 1)])
+        conv_input = self._convnet_simple([(16, 3, 2), (32, 3, 2), (64, 3, 2)])
 
         with tf.variable_scope('branch1x1'):
             branch1x1 = self._conv(conv_input, 64, 1, 1)
@@ -124,7 +126,7 @@ class AgentA2C(AgentLearner):
             self.value_loss_coeff = 0.5
 
             # training process
-            self.save_every = 5000
+            self.save_every = 500
             self.summaries_every = 100
             self.print_every = 50
             self.train_for_steps = 50000

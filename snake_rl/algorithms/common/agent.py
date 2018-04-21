@@ -8,7 +8,7 @@ import json
 import logging
 import tensorflow as tf
 
-from snake_rl.utils.files import *
+from snake_rl.utils.misc import *
 
 
 logger = logging.getLogger(os.path.basename(__file__))

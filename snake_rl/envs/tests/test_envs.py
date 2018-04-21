@@ -48,7 +48,7 @@ class StackFramesTests(unittest.TestCase):
     def test_stack_frames(self):
         env = gym.make(TEST_ENV)
         env = envs.ResizeAndGrayscaleWrapper(env, 64, 64)
-        num_frames = 3
+        num_frames = 2
         env = envs.StackFramesWrapper(env, num_frames)
         obs = env.reset()
         self.assertEqual(obs.shape[-1], num_frames)
@@ -57,9 +57,6 @@ class StackFramesTests(unittest.TestCase):
 
         for _ in range(num_frames - 1):
             obs, *_ = env.step(envs.Action.noop)
-
-        from snake_rl.utils.numpy_utils import imshow
-        imshow(obs)
 
         for i in range(1, obs.shape[-1]):
             self.assertFalse(np.array_equal(obs[:, :, i], obs[:, :, i - 1]))

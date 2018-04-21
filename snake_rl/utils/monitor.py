@@ -11,7 +11,7 @@ import datetime
 
 from os.path import join
 
-from snake_rl.utils.files import stats_dir
+from snake_rl.utils.misc import stats_dir
 
 
 class Monitor:

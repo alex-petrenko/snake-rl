@@ -81,7 +81,6 @@ class Snake(gym.Env):
 
         # use default settings if play mode is None
         self.mode = GameMode() if mode is None else mode
-        world_size = self.mode.world_size
 
         # generate random seed
         self.rng = None
@@ -97,7 +96,7 @@ class Snake(gym.Env):
         self.world = None
         self.snake = None
         self.speed = None
-        self.num_food = 0
+        self.num_food = self.steps = self.last_meal = 0
 
         # stuff related to game rendering
         self.screen = None
@@ -117,6 +116,7 @@ class Snake(gym.Env):
     def reset(self):
         """Generate the new game instance, overrides gym.Env method."""
         self.over = False
+        self.steps = 0
 
         dim = self.mode.world_size
 
@@ -181,8 +181,18 @@ class Snake(gym.Env):
         """Return true if given position is out of world bounds."""
         return pos.i < 0 or pos.i >= self.mode.world_size or pos.j < 0 or pos.j >= self.mode.world_size
 
+    def _check_starvation(self):
+        """Return true if the snake hasn't eaten for too long."""
+        hunger_strike = self.steps - self.last_meal
+        world_area = self.mode.world_size ** 2
+        stamina = world_area // 2 + len(self.snake) + 1
+        stamina = min(world_area, stamina)  # sz^2 steps is always enough to eat
+        return hunger_strike > stamina
+
     def step(self, action):
         """Returns tuple (observation, reward, done, info) as required by gym.Env."""
+        self.steps += 1
+
         reward = 0
         loss_reward = -50 * self.reward_unit
 
@@ -196,7 +206,10 @@ class Snake(gym.Env):
 
         grow = 0
 
-        if self._is_oob(new_head_pos):
+        crashed = self._is_oob(new_head_pos)
+        starved = self._check_starvation()
+
+        if crashed or starved:
             self.over = True
             reward += loss_reward
         else:
@@ -209,6 +222,7 @@ class Snake(gym.Env):
                 reward += loss_reward
             elif tile == GameTile.apple:
                 # eat apple
+                self.last_meal = self.steps
                 self.num_food -= 1
                 grow += 1
                 reward += 10 * self.reward_unit

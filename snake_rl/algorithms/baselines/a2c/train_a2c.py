@@ -2,8 +2,8 @@ import gym
 import sys
 import logging
 
-from snake_rl.utils.files import *
-from snake_rl.utils.monitor import Monitor
+from snake_rl.utils.misc import *
+from snake_rl.utils import init_logger, Monitor
 
 from snake_rl.envs.wrappers import wrap_env
 
@@ -37,14 +37,17 @@ def train(a2c_params, env_id):
 
 
 def main():
+    init_logger()
+
     env_id = CURRENT_ENV
     experiment = get_experiment_name(env_id, CURRENT_EXPERIMENT)
 
     params = a2c.AgentA2C.Params(experiment)
-    params.gamma = 0.95
+    params.gamma = 0.99
+    params.entropy_loss_coeff = 0.25
     params.rollout = 10
     params.num_envs = 16
-    params.train_for_steps = 20000
+    params.train_for_steps = 200000
     return train(params, env_id)
 
 

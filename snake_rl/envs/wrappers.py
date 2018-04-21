@@ -11,7 +11,6 @@ import numpy as np
 from gym import spaces
 from collections import deque
 
-from snake_rl.utils import imshow
 from snake_rl.utils.numpy_utils import numpy_all_the_way
 
 
@@ -22,6 +21,15 @@ class EnvWrapper(gym.Env):
 
     def __init__(self, env):
         self.env = env
+
+        self.observation_space = env.observation_space
+        self.action_space = env.action_space
+        self.reward_range = env.reward_range
+
+        self.clock = env.clock
+
+        self.process_events = env.process_events
+        self.should_quit = env.should_quit
 
     def seed(self, seed=None):
         return self.env.seed(seed)
@@ -51,6 +59,9 @@ class StackFramesWrapper(EnvWrapper):
             raise Exception('Stack frames works with 2D single channel images')
         self.num_frames = num_frames
         self.frames = None
+
+        new_obs_space_shape = env.observation_space.shape + (num_frames, )
+        self.observation_space = spaces.Box(0.0, 1.0, shape=new_obs_space_shape, dtype=np.float32)
 
     def _frames_as_numpy(self):
         return np.transpose(numpy_all_the_way(self.frames), axes=[1, 2, 0])
@@ -90,7 +101,7 @@ class ResizeAndGrayscaleWrapper(EnvWrapper):
         return self._observation(obs), reward, done, info
 
 
-def wrap_env(env, sz=32, num_frames=3):
+def wrap_env(env, sz=32, num_frames=2):
     env = ResizeAndGrayscaleWrapper(env, sz, sz)
     env = StackFramesWrapper(env, num_frames)
     return env

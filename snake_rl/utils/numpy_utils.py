@@ -2,8 +2,13 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
-def imshow(numpy_array, vmin=0.0, vmax=1.0):
-    plt.imshow(numpy_array, interpolation='nearest', vmin=vmin, vmax=vmax, cmap=plt.get_cmap('gray'))
+def imshow(arr, vmin=0.0, vmax=1.0):
+    # add an empty dimension to display 2-channel images
+    if arr.ndim == 3 and arr.shape[-1] == 2:
+        w, h, _ = arr.shape
+        arr = np.dstack((arr, np.zeros((w, h, 1))))
+
+    plt.imshow(arr, interpolation='nearest', vmin=vmin, vmax=vmax, cmap=plt.get_cmap('gray'))
     plt.show()
 
 
