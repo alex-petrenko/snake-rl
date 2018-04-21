@@ -73,7 +73,7 @@ class Snake(gym.Env):
 
     render_modes = ['human', 'rgb_array']
     resolution = {'human': 600, 'rgb_array': 60}  # width and height of the game screen as rendered in pixels
-    reward_unit = 1
+    reward_unit = 0.1
     max_reward_abs = 100 * reward_unit
 
     def __init__(self, mode=None):

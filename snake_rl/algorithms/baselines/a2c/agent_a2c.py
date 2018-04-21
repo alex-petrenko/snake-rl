@@ -4,6 +4,7 @@ Implementation of the synchronous variant of the Advantage Actor-Critic algorith
 """
 
 
+import sys
 import time
 import numpy as np
 
@@ -135,6 +136,8 @@ class AgentA2C(AgentLearner):
         """Initialize A2C computation graph and some auxiliary tensors."""
         super(AgentA2C, self).__init__(params)
 
+        self.best_avg_reward = -sys.float_info.max
+
         input_shape = list(env.observation_space.shape)
         num_actions = env.action_space.n
         self.policy = Policy(input_shape, num_actions)
@@ -197,7 +200,10 @@ class AgentA2C(AgentLearner):
         if step % self.params.print_every == 0:
             logger.info('<====== Step %d ======>', step)
             logger.info('FPS: %.1f', fps)
-            logger.info('Avg. 100 episode reward: %.3f', avg_rewards)
+            if avg_rewards > self.best_avg_reward:
+                self.best_avg_reward = avg_rewards
+                logger.info('<<<<< New record! %.3f >>>>>\n', self.best_avg_reward)
+            logger.info('Avg. 100 episode reward: %.3f (best: %.3f)', avg_rewards, self.best_avg_reward)
 
     def best_action(self, observation):
         actions, _ = self._policy_step([observation])
