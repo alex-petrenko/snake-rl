@@ -24,18 +24,18 @@ def main():
     """Script entry point."""
     init_logger()
 
-    env = gym.make(envs.SNAKE_SIMPLE_LATEST)
+    env = gym.make(envs.SNAKE_TINY_LATEST)
     env.seed(0)
 
     input_fps = 100
     input_interval = 1.0 / input_fps
-    snake_fps = 3
+    snake_fps = 2
     snake_interval = 1.0 / snake_fps
     last_snake_tick = time.time()
 
     episode_rewards = []
-    action = prev_action = Action.noop
     while not env.should_quit():
+        action = prev_action = Action.noop
         env.reset()
         env.render()
 

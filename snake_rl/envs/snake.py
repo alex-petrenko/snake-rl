@@ -65,7 +65,13 @@ class GameMode:
     """All the gameplay settings in one place."""
 
     def __init__(self):
-        self.world_size = 7
+        self.world_size = 6
+
+    @staticmethod
+    def snake_tiny():
+        mode = GameMode()
+        mode.world_size = 4
+        return mode
 
 
 class Snake(gym.Env):
@@ -116,7 +122,7 @@ class Snake(gym.Env):
     def reset(self):
         """Generate the new game instance, overrides gym.Env method."""
         self.over = False
-        self.steps = 0
+        self.steps = self.num_food = self.last_meal = 0
 
         dim = self.mode.world_size
 
@@ -130,16 +136,17 @@ class Snake(gym.Env):
             self.world[pos.ij] = GameTile.snake
             self.snake.append(pos)
 
-        self.num_food = 0
         self._spawn_food()  # generate a first piece of food
 
         self.speed = Action.delta(Action.up)
 
         return self._get_state()
 
+    def _num_vacant_tiles(self):
+        return self.mode.world_size ** 2 - len(self.snake)
+
     def _spawn_food(self):
-        num_vacant_tiles = self.mode.world_size * self.mode.world_size - len(self.snake)
-        food_idx = self.rng.choice(num_vacant_tiles)
+        food_idx = self.rng.choice(self._num_vacant_tiles())
         count_vacant = 0
         for (i, j), tile in np.ndenumerate(self.world):
             if tile == GameTile.ground:
@@ -181,20 +188,28 @@ class Snake(gym.Env):
         """Return true if given position is out of world bounds."""
         return pos.i < 0 or pos.i >= self.mode.world_size or pos.j < 0 or pos.j >= self.mode.world_size
 
-    def _check_starvation(self):
-        """Return true if the snake hasn't eaten for too long."""
-        hunger_strike = self.steps - self.last_meal
+    def _hunger(self):
+        """Steps since last meal."""
+        return self.steps - self.last_meal
+
+    def _stamina(self):
+        """How long snake can live without food."""
         world_area = self.mode.world_size ** 2
-        stamina = world_area // 2 + len(self.snake) + 1
-        stamina = min(world_area, stamina)  # sz^2 steps is always enough to eat
-        return hunger_strike > stamina
+        stamina = world_area + len(self.snake) + 1
+        stamina = min(world_area * 2, stamina)
+        return stamina
+
+    def _is_starved_to_death(self):
+        """Return true if the snake hasn't eaten for too long."""
+        return self._hunger() > self._stamina()
 
     def step(self, action):
         """Returns tuple (observation, reward, done, info) as required by gym.Env."""
         self.steps += 1
 
         reward = 0
-        loss_reward = -50 * self.reward_unit
+        win_reward = 50 * self.reward_unit
+        loss_reward = -win_reward
 
         head_pos = self.snake[0]
         delta = Action.delta(action)
@@ -207,7 +222,7 @@ class Snake(gym.Env):
         grow = 0
 
         crashed = self._is_oob(new_head_pos)
-        starved = self._check_starvation()
+        starved = self._is_starved_to_death()
 
         if crashed or starved:
             self.over = True
@@ -239,9 +254,15 @@ class Snake(gym.Env):
                 self.world[tail_pos.ij] = GameTile.ground
                 retract_tail -= 1
 
-            desired_food = 1
-            while self.num_food < desired_food:
-                self._spawn_food()
+            if self._num_vacant_tiles() > 0:
+                desired_food = 1
+                while self.num_food < desired_food:
+                    self._spawn_food()
+            else:
+                # ate everything
+                self.over = True
+                reward += win_reward
+                logger.info('Finished the game!')
 
         # clamp reward
         reward = np.clip(reward, *self.reward_range)
@@ -260,14 +281,25 @@ class Snake(gym.Env):
     def _tile_offset(cls, idx, tile_size):
         return idx * tile_size + (idx + 1) * cls._tile_border_width(tile_size)
 
-    def _screen_size(self, tile_size):
+    def _world_size(self, tile_size):
         return self._tile_offset(self.mode.world_size, tile_size)
+
+    @staticmethod
+    def _ui_size(tile_size):
+        return tile_size // 5
 
     def _tile_size_for_resolution(self, res):
         tile_size = 1
-        while self._screen_size(tile_size) < res:
+        while self._world_size(tile_size) < res:
             tile_size += 1
         return tile_size
+
+    def _render_ui(self, surface, tile_size):
+        world_size = self._world_size(tile_size)
+        x = world_size
+        y = int((self._hunger() / self._stamina()) * world_size)
+        rect = pygame.Rect(x, y, self._ui_size(tile_size), max(0, world_size - y))
+        pygame.draw.rect(surface, (0, 255, 0), rect)
 
     def _render_game_world(self, surface, tile_size):
         """Render game into a pygame surface."""
@@ -296,13 +328,15 @@ class Snake(gym.Env):
             raise Exception('Unsupported rendering mode')
 
         if self.rendering_surface[mode] is None:
-            screen_size = self._screen_size(self.tile_size[mode])
-            self.rendering_surface[mode] = pygame.Surface((screen_size, screen_size))
+            screen_size_y = world_size = self._world_size(self.tile_size[mode])
+            screen_size_x = world_size + self._ui_size(self.tile_size[mode])
+            self.rendering_surface[mode] = pygame.Surface((screen_size_x, screen_size_y))
             if mode == 'human' and self.screen is None:
-                self.screen = pygame.display.set_mode((screen_size, screen_size))
+                self.screen = pygame.display.set_mode((screen_size_x, screen_size_y))
 
         surface = self.rendering_surface[mode]
         self._render_game_world(surface, self.tile_size[mode])
+        self._render_ui(surface, self.tile_size[mode])
 
         if mode == 'human':
             self.screen.blit(surface, (0, 0))

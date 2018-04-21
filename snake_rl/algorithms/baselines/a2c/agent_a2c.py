@@ -89,20 +89,20 @@ class Policy:
         The model does not use pooling or stride > 1 because the agent needs pixel-perfect control, but it may
         actually be a good idea to try stride or pooling to decrease the number of parameters.
         """
-        conv_input = self._convnet_simple([(16, 3, 2), (32, 3, 2), (64, 3, 2)])
+        conv_input = self._convnet_simple([(8, 3, 2), (16, 3, 2), (32, 3, 2)])
 
         with tf.variable_scope('branch1x1'):
-            branch1x1 = self._conv(conv_input, 64, 1, 1)
+            branch1x1 = self._conv(conv_input, 32, 1, 1)
         with tf.variable_scope('branch5x5'):
-            branch5x5 = self._conv(conv_input, 48, 1, 1)
-            branch5x5 = self._conv(branch5x5, 64, 5, 1)
+            branch5x5 = self._conv(conv_input, 16, 1, 1)
+            branch5x5 = self._conv(branch5x5, 32, 5, 1)
         with tf.variable_scope('branch3x3dbl'):
-            branch3x3dbl = self._conv(conv_input, 64, 1, 1)
-            branch3x3dbl = self._conv(branch3x3dbl, 96, 3, 1)
-            branch3x3dbl = self._conv(branch3x3dbl, 96, 3, 1)
+            branch3x3dbl = self._conv(conv_input, 16, 1, 1)
+            branch3x3dbl = self._conv(branch3x3dbl, 16, 3, 1)
+            branch3x3dbl = self._conv(branch3x3dbl, 16, 3, 1)
         with tf.variable_scope('branch_pool'):
             branch_pool = avg_pool(conv_input, 3, 1)
-            branch_pool = self._conv(branch_pool, 32, 1, 1)
+            branch_pool = self._conv(branch_pool, 16, 1, 1)
 
         return tf.concat(axis=3, values=[branch1x1, branch5x5, branch3x3dbl, branch_pool])
 

@@ -101,7 +101,7 @@ class ResizeAndGrayscaleWrapper(EnvWrapper):
         return self._observation(obs), reward, done, info
 
 
-def wrap_env(env, sz=32, num_frames=2):
+def wrap_env(env, sz=32, num_frames=3):
     env = ResizeAndGrayscaleWrapper(env, sz, sz)
     env = StackFramesWrapper(env, num_frames)
     return env

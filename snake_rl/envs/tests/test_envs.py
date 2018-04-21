@@ -48,7 +48,7 @@ class StackFramesTests(unittest.TestCase):
     def test_stack_frames(self):
         env = gym.make(TEST_ENV)
         env = envs.ResizeAndGrayscaleWrapper(env, 64, 64)
-        num_frames = 2
+        num_frames = 3
         env = envs.StackFramesWrapper(env, num_frames)
         obs = env.reset()
         self.assertEqual(obs.shape[-1], num_frames)
