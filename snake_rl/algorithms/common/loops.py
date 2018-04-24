@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger(os.path.basename(__file__))
 
 
-def run_policy_loop(agent, env, max_num_episodes, fps):
+def run_policy_loop(agent, env, max_num_episodes, fps, deterministic=False):
     """Execute the policy and render onto the screen, using the standard agent interface."""
     agent.initialize()
 
@@ -23,7 +23,7 @@ def run_policy_loop(agent, env, max_num_episodes, fps):
         while not done:
             env.process_events()
             env.render()
-            action = agent.best_action(obs)
+            action = agent.best_action(obs, deterministic=deterministic)
             obs, rew, done, _ = env.step(action)
             episode_reward += rew
             env.clock.tick(fps)

@@ -24,12 +24,11 @@ def main():
     """Script entry point."""
     init_logger()
 
-    env = gym.make(envs.SNAKE_TINY_LATEST)
-    env.seed(0)
+    env = gym.make(envs.SNAKE_SIMPLE_LATEST)
 
     input_fps = 100
     input_interval = 1.0 / input_fps
-    snake_fps = 2
+    snake_fps = 5
     snake_interval = 1.0 / snake_fps
     last_snake_tick = time.time()
 

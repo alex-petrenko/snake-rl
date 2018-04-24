@@ -25,10 +25,9 @@ logger = logging.getLogger(os.path.basename(__file__))
 def enjoy(experiment, env_id, max_num_episodes=1000000, fps=7):
     env = wrap_env(gym.make(env_id))
     env.seed(0)
-
     params = a2c.AgentA2C.Params(experiment).load()
     agent = a2c.AgentA2C(env, params)
-    return run_policy_loop(agent, env, max_num_episodes, fps)
+    return run_policy_loop(agent, env, max_num_episodes, fps, deterministic=True)
 
 
 def main():

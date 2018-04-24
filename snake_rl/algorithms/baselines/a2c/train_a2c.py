@@ -44,10 +44,10 @@ def main():
 
     params = a2c.AgentA2C.Params(experiment)
     params.gamma = 0.98
-    params.entropy_loss_coeff = 0.05
+    params.entropy_loss_coeff = 0.1
     params.rollout = 10
     params.num_envs = 16
-    params.train_for_steps = 200000
+    params.train_for_steps = 2000000
     return train(params, env_id)
 
 

@@ -68,9 +68,9 @@ class GameMode:
         self.world_size = 6
 
     @staticmethod
-    def snake_tiny():
+    def snake(size):
         mode = GameMode()
-        mode.world_size = 4
+        mode.world_size = size
         return mode
 
 
@@ -78,7 +78,7 @@ class Snake(gym.Env):
     """Implementation of the Snake learning environment."""
 
     render_modes = ['human', 'rgb_array']
-    resolution = {'human': 600, 'rgb_array': 60}  # width and height of the game screen as rendered in pixels
+    resolution = {'human': 800, 'rgb_array': 50}  # width and height of the game screen as rendered in pixels
     reward_unit = 0.1
     max_reward_abs = 100 * reward_unit
 
@@ -106,7 +106,7 @@ class Snake(gym.Env):
 
         # stuff related to game rendering
         self.screen = None
-        self.tile_size = {mode: self._tile_size_for_resolution(res) for mode, res in self.resolution.items()}
+        self.tile_sz = {mode: self._tile_sz_for_resolution(res) for mode, res in self.resolution.items()}
         self.rendering_surface = {mode: None for mode in self.render_modes}
 
         self.clock = pygame.time.Clock()
@@ -274,34 +274,34 @@ class Snake(gym.Env):
         return self.render(mode='rgb_array')
 
     @staticmethod
-    def _tile_border_width(tile_size):
-        return max(int(tile_size * 0.1), 1)
+    def _tile_border(tile_sz):
+        return max(int(tile_sz * 0.1), 1)
 
     @classmethod
-    def _tile_offset(cls, idx, tile_size):
-        return idx * tile_size + (idx + 1) * cls._tile_border_width(tile_size)
+    def _tile_offset(cls, idx, tile_sz):
+        return idx * tile_sz + (idx + 1) * cls._tile_border(tile_sz)
 
-    def _world_size(self, tile_size):
-        return self._tile_offset(self.mode.world_size, tile_size)
+    def _world_size(self, tile_sz):
+        return self._tile_offset(self.mode.world_size, tile_sz)
 
     @staticmethod
-    def _ui_size(tile_size):
-        return tile_size // 5
+    def _ui_size(tile_sz):
+        return max(tile_sz // 5, 5)
 
-    def _tile_size_for_resolution(self, res):
-        tile_size = 1
-        while self._world_size(tile_size) < res:
-            tile_size += 1
-        return tile_size
+    def _tile_sz_for_resolution(self, res):
+        tile_sz = 1
+        while self._world_size(tile_sz) < res:
+            tile_sz += 1
+        return tile_sz
 
-    def _render_ui(self, surface, tile_size):
-        world_size = self._world_size(tile_size)
+    def _render_ui(self, surface, tile_sz):
+        world_size = self._world_size(tile_sz)
         x = world_size
         y = int((self._hunger() / self._stamina()) * world_size)
-        rect = pygame.Rect(x, y, self._ui_size(tile_size), max(0, world_size - y))
+        rect = pygame.Rect(x, y, self._ui_size(tile_sz), max(0, world_size - y))
         pygame.draw.rect(surface, (0, 255, 0), rect)
 
-    def _render_game_world(self, surface, tile_size):
+    def _render_game_world(self, surface, tile_sz):
         """Render game into a pygame surface."""
         surface.fill((9, 5, 6))
         for (i, j), tile in np.ndenumerate(self.world):
@@ -313,13 +313,13 @@ class Snake(gym.Env):
                 color = GameTile.snake_head_color()
             else:
                 color = GameTile.color(tile)
-            self.draw_tile(surface, pos, color, tile_size)
+            self.draw_tile(surface, pos, color, tile_sz)
 
     @classmethod
-    def draw_tile(cls, surface, pos, color, tile_size):
-        x = cls._tile_offset(pos.x, tile_size)
-        y = cls._tile_offset(pos.y, tile_size)
-        rect = pygame.Rect(x, y, tile_size, tile_size)
+    def draw_tile(cls, surface, pos, color, tile_sz):
+        x = cls._tile_offset(pos.x, tile_sz)
+        y = cls._tile_offset(pos.y, tile_sz)
+        rect = pygame.Rect(x, y, tile_sz, tile_sz)
         pygame.draw.rect(surface, color, rect)
 
     def render(self, mode='human'):
@@ -328,15 +328,15 @@ class Snake(gym.Env):
             raise Exception('Unsupported rendering mode')
 
         if self.rendering_surface[mode] is None:
-            screen_size_y = world_size = self._world_size(self.tile_size[mode])
-            screen_size_x = world_size + self._ui_size(self.tile_size[mode])
+            screen_size_y = world_size = self._world_size(self.tile_sz[mode])
+            screen_size_x = world_size + self._ui_size(self.tile_sz[mode])
             self.rendering_surface[mode] = pygame.Surface((screen_size_x, screen_size_y))
             if mode == 'human' and self.screen is None:
                 self.screen = pygame.display.set_mode((screen_size_x, screen_size_y))
 
         surface = self.rendering_surface[mode]
-        self._render_game_world(surface, self.tile_size[mode])
-        self._render_ui(surface, self.tile_size[mode])
+        self._render_game_world(surface, self.tile_sz[mode])
+        self._render_ui(surface, self.tile_sz[mode])
 
         if mode == 'human':
             self.screen.blit(surface, (0, 0))
