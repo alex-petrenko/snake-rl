@@ -16,11 +16,12 @@ from matplotlib import pyplot as plt
 from tensorflow.examples.tutorials.mnist import input_data
 
 from snake_rl.utils import init_logger
-from snake_rl.utils.misc import model_dir
+from snake_rl.utils.misc import experiment_dir, model_dir
 
 logger = logging.getLogger(os.path.basename(__file__))
 
 
+EXPERIMENT = 'mnist_vae_experiment'
 N_LATENT = 8
 
 
@@ -94,7 +95,7 @@ def main():
     """Script entry point."""
     init_logger()
 
-    mnist = input_data.read_data_sets('MNIST_data')
+    mnist = input_data.read_data_sets(os.path.join(experiment_dir(EXPERIMENT), 'MNIST_data'))
 
     tf.reset_default_graph()
 
@@ -117,7 +118,7 @@ def main():
 
     with tf.Session() as session:
         saver = tf.train.Saver(max_to_keep=3)
-        checkpoint_dir = model_dir('mnist_vae_experiment')
+        checkpoint_dir = model_dir(EXPERIMENT)
         try:
             saver.restore(session, tf.train.latest_checkpoint(checkpoint_dir=checkpoint_dir))
         except ValueError:

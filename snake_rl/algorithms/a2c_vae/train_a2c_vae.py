@@ -7,16 +7,15 @@ from snake_rl.utils import init_logger, Monitor
 
 from snake_rl.envs.wrappers import wrap_env
 
+from snake_rl.algorithms import a2c_vae
+from snake_rl.algorithms.a2c_vae.a2c_vae_utils import *
 from snake_rl.algorithms.utils.multi_env import MultiEnv
-
-from snake_rl.algorithms.baselines import a2c
-from snake_rl.algorithms.baselines.a2c.a2c_utils import *
 
 
 logger = logging.getLogger(os.path.basename(__file__))
 
 
-class A2CMonitor(Monitor):
+class A2CVaeMonitor(Monitor):
     def callback(self, local_vars, _):
         time_step = local_vars['step']
         if time_step % 10 == 0:
@@ -24,13 +23,13 @@ class A2CMonitor(Monitor):
             self.progress_file.flush()
 
 
-def train(a2c_params, env_id):
-    multithread_env = MultiEnv(a2c_params.num_envs, make_env_func=lambda: wrap_env(gym.make(env_id)))
+def train(params, env_id):
+    multithread_env = MultiEnv(params.num_envs, make_env_func=lambda: wrap_env(gym.make(env_id)))
 
-    agent = a2c.AgentA2C(multithread_env, params=a2c_params)
+    agent = a2c_vae.AgentA2CVae(multithread_env, params=params)
     agent.initialize()
 
-    with A2CMonitor(a2c_params.experiment_name) as monitor:
+    with A2CVaeMonitor(params.experiment_name) as monitor:
         agent.learn(multithread_env, step_callback=monitor.callback)
 
     agent.finalize()
@@ -44,12 +43,7 @@ def main():
     env_id = CURRENT_ENV
     experiment = get_experiment_name(env_id, CURRENT_EXPERIMENT)
 
-    params = a2c.AgentA2C.Params(experiment)
-    params.gamma = 0.98
-    params.entropy_loss_coeff = 0.1
-    params.rollout = 10
-    params.num_envs = 16
-    params.train_for_steps = 2000000
+    params = a2c_vae.AgentA2CVae.Params(experiment)
     return train(params, env_id)
 
 
