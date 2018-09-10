@@ -11,7 +11,6 @@ from snake_rl import envs
 
 from snake_rl.algorithms.utils.multi_env import MultiEnv
 
-
 TEST_ENV = envs.SNAKE_SIMPLE_LATEST
 
 

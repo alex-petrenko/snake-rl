@@ -14,7 +14,11 @@ import tensorflow as tf
 logger = logging.getLogger(os.path.basename(__file__))
 
 
-def dense(x, layer_size, regularizer, activation=tf.nn.relu):
+def lrelu(x, alpha=0.3):
+    return tf.maximum(x, tf.multiply(x, alpha))
+
+
+def dense(x, layer_size, regularizer=None, activation=tf.nn.relu):
     return tf.contrib.layers.fully_connected(
         x,
         layer_size,
@@ -33,6 +37,19 @@ def conv(x, num_filters, kernel_size, stride=1, regularizer=None, scope=None):
         weights_regularizer=regularizer,
         biases_regularizer=regularizer,
         scope=scope,
+    )
+
+
+def conv_t(x, num_filters, kernel_size, stride=1, regularizer=None, activation=tf.nn.relu):
+    return tf.layers.conv2d_transpose(
+        x,
+        num_filters,
+        kernel_size,
+        strides=stride,
+        padding='SAME',
+        activation=activation,
+        kernel_regularizer=regularizer,
+        bias_regularizer=regularizer,
     )
 
 
@@ -92,20 +109,20 @@ def put_kernels_on_grid(kernel, pad=1):
     x = tf.pad(kernel, tf.constant([[pad, pad], [pad, pad], [0, 0], [0, 0]]), mode='CONSTANT')
 
     # X and Y dimensions, w.r.t. padding
-    Y = kernel.get_shape()[0] + 2 * pad
-    X = kernel.get_shape()[1] + 2 * pad
+    height = kernel.get_shape()[0] + 2 * pad
+    width = kernel.get_shape()[1] + 2 * pad
 
     channels = kernel.get_shape()[2]
 
     # put NumKernels to the 1st dimension
     x = tf.transpose(x, (3, 0, 1, 2))
     # organize grid on Y axis
-    x = tf.reshape(x, tf.stack([grid_X, Y * grid_Y, X, channels]))
+    x = tf.reshape(x, tf.stack([grid_X, height * grid_Y, width, channels]))
 
     # switch X and Y axes
     x = tf.transpose(x, (0, 2, 1, 3))
     # organize grid on X axis
-    x = tf.reshape(x, tf.stack([1, X * grid_X, Y * grid_Y, channels]))
+    x = tf.reshape(x, tf.stack([1, width * grid_X, height * grid_Y, channels]))
 
     # back to normal order (not combining with the next step for clarity)
     x = tf.transpose(x, (2, 1, 3, 0))

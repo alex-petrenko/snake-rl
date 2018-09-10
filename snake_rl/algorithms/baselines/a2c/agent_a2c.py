@@ -47,7 +47,7 @@ class Policy:
         if model_name == 'inception':
             conv_filters = self._inception()
         elif model_name == 'convnet':
-            conv_filters = self._convnet_simple([(32, 3, 1), (64, 3, 1), (64, 3, 1)])
+            conv_filters = self._convnet_simple([(32, 3, 2), (64, 3, 2), (64, 3, 2)])
         else:
             raise Exception('Unknown model name')
 
@@ -84,12 +84,6 @@ class Policy:
         return layer
 
     def _inception(self):
-        """
-        An inception module, preceded by a single conv layer.
-        This model does give a minor improvement over a simple convnet, but not much.
-        The model does not use pooling or stride > 1 because the agent needs pixel-perfect control, but it may
-        actually be a good idea to try stride or pooling to decrease the number of parameters.
-        """
         conv_input = self._convnet_simple([(8, 3, 2), (16, 3, 2), (32, 3, 2)])
 
         with tf.variable_scope('branch1x1'):
@@ -119,15 +113,18 @@ class AgentA2C(AgentLearner):
             super(AgentA2C.Params, self).__init__(experiment_name)
 
             self.gamma = 0.9  # future reward discount
-            self.learning_rate = 1e-3
             self.rollout = 5  # number of successive env steps used for each model update
             self.num_envs = 16  # number of environments running in parallel. Batch size = rollout * num_envs
+
+            # policy
+            self.model_name = 'inception'
 
             # components of the loss function
             self.entropy_loss_coeff = 0.01
             self.value_loss_coeff = 0.5
 
             # training process
+            self.learning_rate = 1e-3
             self.save_every = 500
             self.summaries_every = 100
             self.print_every = 50
@@ -141,7 +138,7 @@ class AgentA2C(AgentLearner):
 
         input_shape = list(env.observation_space.shape)
         num_actions = env.action_space.n
-        self.policy = Policy(input_shape, num_actions)
+        self.policy = Policy(input_shape, num_actions, params.model_name)
 
         self.selected_actions = tf.placeholder(tf.int32, [None])  # action selected by the policy
         self.value_estimates = tf.placeholder(tf.float32, [None])

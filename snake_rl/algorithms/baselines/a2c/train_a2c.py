@@ -50,6 +50,7 @@ def main():
     params.rollout = 10
     params.num_envs = 16
     params.train_for_steps = 2000000
+    params.model_name = 'convnet'
     return train(params, env_id)
 
 
